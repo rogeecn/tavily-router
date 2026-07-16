@@ -1,0 +1,9 @@
+services:
+  tavily-router:
+    build: .
+    # image: ghcr.io/rogeecn/tavily-router:latest
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
