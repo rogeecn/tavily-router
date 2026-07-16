@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Listen  string   `yaml:"listen"`
-	Upstream string  `yaml:"upstream"`
-	APIKeys []string `yaml:"api_keys"`
+	Listen   string   `yaml:"listen"`
+	Upstream string   `yaml:"upstream"`
+	APIKeys  []string `yaml:"api_keys"`
+	Auth     []string `yaml:"auth"`
 }
 
 type KeyRotator struct {

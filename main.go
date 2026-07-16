@@ -31,6 +31,11 @@ func main() {
 	log.Printf("  监听地址: %s", cfg.Listen)
 	log.Printf("  上游地址: %s", cfg.Upstream)
 	log.Printf("  API Keys: %d 个 (round-robin)", proxy.rotator.Len())
+	if len(cfg.Auth) > 0 {
+		log.Printf("  入站认证: 已启用 (%d 个 token)", len(cfg.Auth))
+	} else {
+		log.Printf("  入站认证: 未启用 (警告: 公网暴露无认证)")
+	}
 
 	srv := &http.Server{
 		Addr:    cfg.Listen,

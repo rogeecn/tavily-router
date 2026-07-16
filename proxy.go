@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 )
 
 type TavilyProxy struct {
 	rotator  *KeyRotator
 	upstream *url.URL
+	authKeys map[string]bool
 }
 
 func NewTavilyProxy(cfg *Config) (*TavilyProxy, error) {
@@ -19,13 +21,30 @@ func NewTavilyProxy(cfg *Config) (*TavilyProxy, error) {
 		return nil, fmt.Errorf("解析上游地址失败: %w", err)
 	}
 
+	authMap := make(map[string]bool, len(cfg.Auth))
+	for _, k := range cfg.Auth {
+		authMap[k] = true
+	}
+
 	return &TavilyProxy{
 		rotator:  &KeyRotator{keys: cfg.APIKeys},
 		upstream: u,
+		authKeys: authMap,
 	}, nil
 }
 
 func (p *TavilyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 入站认证
+	if len(p.authKeys) > 0 {
+		provided := r.Header.Get("Authorization")
+		provided = strings.TrimPrefix(provided, "Bearer ")
+		if !p.authKeys[provided] {
+			log.Printf("[%s] %s %s -> 401 (认证失败)", r.RemoteAddr, r.Method, r.URL.Path)
+			http.Error(w, `{"error": "unauthorized"}`, http.StatusUnauthorized)
+			return
+		}
+	}
+
 	key := p.rotator.Next()
 	if key == "" {
 		http.Error(w, `{"error": "no api keys configured"}`, http.StatusInternalServerError)

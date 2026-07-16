@@ -12,3 +12,9 @@ upstream: "https://api.tavily.com"
 api_keys:
   - "tvly-xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
   - "tvly-yyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+
+# 入站认证 token (防止公网被随意调用)
+# 客户端请求时需携带 Authorization: Bearer <token>
+# 留空或不配置则不启用认证
+auth:
+  - "your-secret-token-here"
