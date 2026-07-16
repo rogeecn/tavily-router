@@ -54,6 +54,9 @@ func LoadConfig(path string) (*Config, error) {
 	if len(cfg.APIKeys) == 0 {
 		return nil, fmt.Errorf("配置文件中至少需要一个 api_key")
 	}
+	if len(cfg.Auth) == 0 {
+		return nil, fmt.Errorf("配置文件中至少需要一个 auth token (防止公网暴露无认证)")
+	}
 
 	return &cfg, nil
 }
