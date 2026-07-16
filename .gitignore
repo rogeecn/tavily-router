@@ -1,0 +1,14 @@
+# Binary
+tavily-router
+
+# Config with real keys
+config.yaml
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out

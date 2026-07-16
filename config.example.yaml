@@ -1,0 +1,14 @@
+# Tavily Router 配置文件
+# 复制此文件为 config.yaml 并填入你的 API keys
+
+# 监听地址
+listen: "0.0.0.0:8787"
+
+# Tavily API 上游地址 (一般不需要改)
+upstream: "https://api.tavily.com"
+
+# API Keys (round-robin 轮询)
+# 支持配置多个 key，请求会按顺序轮流使用
+api_keys:
+  - "tvly-xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  - "tvly-yyyyyyyyyyyyyyyyyyyyyyyyyyyy"
