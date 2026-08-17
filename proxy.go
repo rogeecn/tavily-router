@@ -23,6 +23,9 @@ func NewTavilyProxy(cfg *Config) (*TavilyProxy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("解析上游地址失败: %w", err)
 	}
+	if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return nil, fmt.Errorf("上游地址必须是完整的 HTTP(S) URL: %q", cfg.Upstream)
+	}
 
 	authMap := make(map[string]bool, len(cfg.Auth))
 	for _, k := range cfg.Auth {
@@ -42,8 +45,14 @@ func (p *TavilyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var bodyMap map[string]interface{}
 
 	if r.Body != nil {
-		bodyBytes, _ = io.ReadAll(r.Body)
+		var err error
+		bodyBytes, err = io.ReadAll(r.Body)
 		r.Body.Close()
+		if err != nil {
+			log.Printf("[%s] %s %s -> 400 (读取请求体失败: %v)", r.RemoteAddr, r.Method, r.URL.Path, err)
+			http.Error(w, `{"error": "invalid request body"}`, http.StatusBadRequest)
+			return
+		}
 		_ = json.Unmarshal(bodyBytes, &bodyMap) // body 可能为非 JSON，忽略错误
 	}
 
@@ -83,9 +92,13 @@ func (p *TavilyProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 将 body 中的 api_key 替换为真实的轮询 key，确保上游 Tavily 收到正确的 key
 	if bodyMap != nil {
 		bodyMap["api_key"] = key
-		if newBody, err := json.Marshal(bodyMap); err == nil {
-			bodyBytes = newBody
+		newBody, err := json.Marshal(bodyMap)
+		if err != nil {
+			log.Printf("[%s] %s %s -> 500 (编码请求体失败: %v)", r.RemoteAddr, r.Method, r.URL.Path, err)
+			http.Error(w, `{"error": "request body encoding failed"}`, http.StatusInternalServerError)
+			return
 		}
+		bodyBytes = newBody
 	}
 
 	// 还原 body 供反向代理转发
